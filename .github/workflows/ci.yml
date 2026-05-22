@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sanitization:
+    name: Sanitization gate (no private refs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Grep for private repo names / domain terms
+        run: |
+          set -e
+          # Fail build if any private reference leaked into the repo.
+          # Whitelist patterns where Yeimaoz/discord-event-bus URL is legitimate.
+          # F-H3 fix 2026-05-22: pattern aligned with T12.5 final review grep
+          # (includes binance + personal email)
+          if git ls-files | grep -v '^\.github/' | xargs grep -nE 'lcz-radar|lcz-sentinel|lcz-trading|yt-digest|threads-scraper|shioaji|永豐金|加密貨幣|binance|mtf_|wfo_|news-radar|lczheng\.official' 2>/dev/null; then
+            echo "::error::sanitization grep hit — private refs leaked"
+            exit 1
+          fi
+          echo "sanitization OK"
+
+  test:
+    name: pytest / ruff / mypy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e .[dev]
+      - run: ruff check .
+      - run: mypy --strict discord_event_bus
+      - run: pytest -v
