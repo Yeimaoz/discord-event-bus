@@ -6,14 +6,14 @@ from typing import Any, Protocol, runtime_checkable
 
 import httpx
 
-from discord_event_bus._http import post_with_retry
+from discord_event_bus._http import post_with_retry, post_with_retry_async
 from discord_event_bus.embed_validation import validate_embed
 from discord_event_bus.errors import (
     ChannelNotConfigured,
     WebhookUrlMissing,
 )
 from discord_event_bus.manifest import Manifest, load_manifest
-from discord_event_bus.rate_limit import TokenBucket
+from discord_event_bus.rate_limit import AsyncTokenBucket, TokenBucket
 
 USER_AGENT = "discord-event-bus/0.1.0 (+https://github.com/Yeimaoz/discord-event-bus)"
 DEFAULT_TIMEOUT_SEC = 10.0
@@ -109,3 +109,72 @@ class EventBus:
 
     def __exit__(self, *args) -> None:
         self.close()
+
+
+class AsyncEventBus:
+    """Asynchronous Discord event publisher.
+
+    Usage:
+        async with AsyncEventBus.from_manifest("manifest.toml") as bus:
+            await bus.publish(channel="alerts", event=my_event)
+    """
+
+    def __init__(self, manifest: Manifest) -> None:
+        self._manifest = manifest
+        self._buckets: dict[str, AsyncTokenBucket] = {
+            ch.name: AsyncTokenBucket(
+                capacity=ch.rate_limit_per_min,
+                refill_per_sec=ch.rate_limit_per_min / 60.0,
+            )
+            for ch in manifest.channels
+        }
+        self._client = httpx.AsyncClient(headers={"User-Agent": USER_AGENT})
+
+    @classmethod
+    def from_manifest(cls, manifest_path: str | Path) -> "AsyncEventBus":
+        return cls(manifest=load_manifest(manifest_path))
+
+    async def publish(
+        self,
+        channel: str,
+        event: DiscordEmbed,
+        *,
+        timeout: float = DEFAULT_TIMEOUT_SEC,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+    ) -> None:
+        ch = self._manifest.get_channel(channel)
+        if ch is None:
+            raise ChannelNotConfigured(f"channel '{channel}' not in manifest")
+
+        webhook_url = os.environ.get(ch.webhook_env_var or "")
+        if not webhook_url:
+            raise WebhookUrlMissing(
+                f"channel '{channel}' webhook_env_var='{ch.webhook_env_var}' unset"
+            )
+
+        embed = event.to_embed()
+        validate_embed(embed)
+
+        await self._buckets[channel].acquire(timeout=DEFAULT_RATE_LIMIT_TIMEOUT_SEC)
+
+        await post_with_retry_async(
+            self._client,
+            webhook_url,
+            json={"embeds": [embed]},
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+
+    async def aclose(self) -> None:
+        """Close underlying httpx.AsyncClient. Idempotent."""
+        if self._client is not None:
+            try:
+                await self._client.aclose()
+            except Exception:
+                pass
+
+    async def __aenter__(self) -> "AsyncEventBus":
+        return self
+
+    async def __aexit__(self, *args) -> None:
+        await self.aclose()

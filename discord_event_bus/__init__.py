@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from discord_event_bus.api import DiscordEmbed, EventBus
+from discord_event_bus.api import AsyncEventBus, DiscordEmbed, EventBus
 from discord_event_bus.errors import (
     ChannelNotConfigured,
     EmbedValidationError,
@@ -15,6 +15,7 @@ from discord_event_bus.errors import (
 __all__ = [
     "__version__",
     "EventBus",
+    "AsyncEventBus",
     "DiscordEmbed",
     "PublishError",
     "ChannelNotConfigured",
