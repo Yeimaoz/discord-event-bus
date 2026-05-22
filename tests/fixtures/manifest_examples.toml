@@ -1,0 +1,18 @@
+# Valid manifest (used by multiple tests)
+[manifest]
+name = "my-app"
+version = "0.1.0"
+schema_version = 1
+
+[[channels]]
+name = "alerts"
+direction = "publish"
+webhook_env_var = "DISCORD_WEBHOOK_ALERTS"
+rate_limit_per_min = 30
+
+[[channels]]
+name = "general"
+direction = "publish"
+webhook_env_var = "DISCORD_WEBHOOK_GENERAL"
+rate_limit_per_min = 60
+description = "general events"
