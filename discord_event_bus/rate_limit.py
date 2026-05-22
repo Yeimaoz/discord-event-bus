@@ -65,7 +65,7 @@ class AsyncTokenBucket:
         self._last_refill = now
 
     async def acquire(self, timeout: float = 0) -> None:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         deadline = loop.time() + timeout
         while True:
             async with self._lock:

@@ -17,9 +17,9 @@ async def test_async_initial_bucket_full():
 async def test_async_blocking_until_refill():
     b = AsyncTokenBucket(capacity=1, refill_per_sec=10.0)
     await b.acquire(timeout=0)
-    start = asyncio.get_event_loop().time()
+    start = asyncio.get_running_loop().time()
     await b.acquire(timeout=1.0)
-    elapsed = asyncio.get_event_loop().time() - start
+    elapsed = asyncio.get_running_loop().time() - start
     assert 0.05 < elapsed < 0.5
 
 
