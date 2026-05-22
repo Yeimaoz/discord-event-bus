@@ -17,9 +17,11 @@ def test_publish_error_base():
 
 
 def test_subclasses_inherit_publish_error():
-    for cls in (ChannelNotConfigured, WebhookUrlMissing, EmbedValidationError, RateLimitExhausted):
+    for cls in (ChannelNotConfigured, WebhookUrlMissing, RateLimitExhausted):
         err = cls("test")
         assert isinstance(err, PublishError)
+    # EmbedValidationError uses strict kwargs; tested in dedicated test below.
+    assert issubclass(EmbedValidationError, PublishError)
 
 
 def test_manifest_validation_error_is_separate():

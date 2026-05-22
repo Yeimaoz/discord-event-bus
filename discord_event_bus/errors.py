@@ -22,7 +22,7 @@ class EmbedValidationError(PublishError):
         max_allowed: Discord's max for that field
     """
 
-    def __init__(self, field_name: str, *, actual: int = 0, max_allowed: int = 0) -> None:
+    def __init__(self, field_name: str, *, actual: int, max_allowed: int) -> None:
         self.field_name = field_name
         self.actual = actual
         self.max_allowed = max_allowed
