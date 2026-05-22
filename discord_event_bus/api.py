@@ -107,7 +107,12 @@ class EventBus:
     def __enter__(self) -> "EventBus":
         return self
 
-    def __exit__(self, *args) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         self.close()
 
 
@@ -176,5 +181,10 @@ class AsyncEventBus:
     async def __aenter__(self) -> "AsyncEventBus":
         return self
 
-    async def __aexit__(self, *args) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         await self.aclose()

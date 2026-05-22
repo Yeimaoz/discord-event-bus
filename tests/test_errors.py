@@ -1,4 +1,3 @@
-import pytest
 
 from discord_event_bus.errors import (
     ChannelNotConfigured,

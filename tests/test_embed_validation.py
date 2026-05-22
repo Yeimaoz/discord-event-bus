@@ -1,4 +1,5 @@
 import pytest
+
 from discord_event_bus.embed_validation import (
     LIMITS,
     validate_embed,

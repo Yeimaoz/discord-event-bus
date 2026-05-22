@@ -10,23 +10,24 @@ Per design v1.1 §4.2:
 
 import asyncio
 import time
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
 from discord_event_bus.errors import PublishError
 
 RETRY_STATUS_CODES: frozenset[int] = frozenset({429, 500, 502, 503, 504})
-_BACKOFF_INITIAL_SEC = 1.0
+_BACKOFF_INITIAL_SEC: float = 1.0
 
 
 def _parse_retry_after(resp: httpx.Response) -> float:
     """Extract Retry-After header in seconds. Returns 0 if absent/invalid."""
-    val = resp.headers.get("Retry-After") or resp.headers.get("retry-after")
-    if val is None:
+    raw = resp.headers.get("Retry-After") or resp.headers.get("retry-after")
+    if raw is None:
         return 0.0
     try:
-        return float(val)
+        # cast breaks Any propagation from httpx.Headers.get (typed Any in httpx stubs)
+        return float(cast(str, raw))
     except (ValueError, TypeError):
         return 0.0
 
@@ -35,7 +36,7 @@ def _compute_backoff(attempt: int, retry_after: float) -> float:
     """attempt is 0-based. retry_after overrides if > 0."""
     if retry_after > 0:
         return retry_after
-    return _BACKOFF_INITIAL_SEC * (2 ** attempt)   # 1, 2, 4, 8, ...
+    return _BACKOFF_INITIAL_SEC * int(2 ** attempt)  # 1, 2, 4, 8, ...
 
 
 def post_with_retry(

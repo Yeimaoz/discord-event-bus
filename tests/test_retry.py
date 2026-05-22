@@ -87,6 +87,7 @@ def test_retry_status_codes_exposed():
 @pytest.mark.asyncio
 async def test_async_success_204_no_retry():
     from unittest.mock import AsyncMock
+
     from discord_event_bus._http import post_with_retry_async
     client = AsyncMock()
     client.post.return_value = _mk_resp(204)
@@ -97,6 +98,7 @@ async def test_async_success_204_no_retry():
 @pytest.mark.asyncio
 async def test_async_500_retries():
     from unittest.mock import AsyncMock
+
     from discord_event_bus._http import post_with_retry_async
     client = AsyncMock()
     client.post.side_effect = [_mk_resp(503), _mk_resp(204)]

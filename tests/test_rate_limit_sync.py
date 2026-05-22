@@ -1,5 +1,7 @@
 import time
+
 import pytest
+
 from discord_event_bus.errors import RateLimitExhausted
 from discord_event_bus.rate_limit import TokenBucket
 

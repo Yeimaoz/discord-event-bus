@@ -1,4 +1,3 @@
-import json
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -6,9 +5,9 @@ import httpx
 import pytest
 
 from discord_event_bus import (
+    ChannelNotConfigured,
     DiscordEmbed,
     EventBus,
-    ChannelNotConfigured,
     WebhookUrlMissing,
 )
 

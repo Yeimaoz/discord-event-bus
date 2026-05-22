@@ -3,7 +3,7 @@
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 from discord_event_bus.errors import ManifestValidationError
 
@@ -15,7 +15,7 @@ DEFAULT_RATE_LIMIT_PER_MIN = 30
 class Channel:
     name: str
     direction: Literal["publish", "subscribe", "both"]
-    webhook_env_var: Optional[str] = None
+    webhook_env_var: str | None = None
     rate_limit_per_min: int = DEFAULT_RATE_LIMIT_PER_MIN
     description: str = ""
 
@@ -27,7 +27,7 @@ class Manifest:
     schema_version: int
     channels: tuple[Channel, ...] = field(default_factory=tuple)
 
-    def get_channel(self, name: str) -> Optional[Channel]:
+    def get_channel(self, name: str) -> Channel | None:
         for ch in self.channels:
             if ch.name == name:
                 return ch
