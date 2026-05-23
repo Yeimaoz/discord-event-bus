@@ -1,6 +1,6 @@
 """discord-event-bus — generic Discord webhook publisher."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from discord_event_bus.api import AsyncEventBus, DiscordEmbed, EventBus
 from discord_event_bus.errors import (

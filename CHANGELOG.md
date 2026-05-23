@@ -1,6 +1,15 @@
 # Changelog
 
-## [0.1.0] — 2026-05-22 (planned)
+## [0.1.1] — 2026-05-23
+
+### Security
+- Suppress httpx INFO log line `HTTP Request: POST <url>` which would expose
+  the webhook URL (including token) in journalctl / log aggregators. httpx
+  logger now defaults to WARNING level on discord_event_bus import.
+  Users who need debug HTTP traces can re-enable manually:
+  `logging.getLogger("httpx").setLevel(logging.DEBUG)`.
+
+## [0.1.0] — 2026-05-22
 
 Initial release.
 

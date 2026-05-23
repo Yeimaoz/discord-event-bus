@@ -1,5 +1,6 @@
 """EventBus + AsyncEventBus public API + DiscordEmbed Protocol."""
 
+import logging
 import os
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
@@ -15,7 +16,13 @@ from discord_event_bus.errors import (
 from discord_event_bus.manifest import Manifest, load_manifest
 from discord_event_bus.rate_limit import AsyncTokenBucket, TokenBucket
 
-USER_AGENT = "discord-event-bus/0.1.0 (+https://github.com/Yeimaoz/discord-event-bus)"
+# Suppress httpx INFO log line "HTTP Request: POST <url>" — it includes
+# webhook token in path which would leak to journalctl / log aggregators.
+# Users who need debug-level HTTP logs can re-enable:
+#   logging.getLogger("httpx").setLevel(logging.DEBUG)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+USER_AGENT = "discord-event-bus/0.1.1 (+https://github.com/Yeimaoz/discord-event-bus)"
 DEFAULT_TIMEOUT_SEC = 10.0
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_RATE_LIMIT_TIMEOUT_SEC = 60.0   # max blocking on token bucket
