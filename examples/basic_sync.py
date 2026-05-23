@@ -4,7 +4,7 @@ Requires DISCORD_WEBHOOK_ALERTS env var set to a Discord webhook URL.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 from discord_event_bus import EventBus
 
@@ -14,7 +14,7 @@ class MyEvent:
     title: str
     body: str
     severity: str = "INFO"
-    ts: datetime = field(default_factory=lambda: datetime.now(datetime.UTC))
+    ts: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_embed(self) -> dict:
         color = {"INFO": 0x3498DB, "WARN": 0xF1C40F, "CRITICAL": 0xE74C3C}

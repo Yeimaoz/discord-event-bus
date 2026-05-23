@@ -35,6 +35,8 @@ with EventBus.from_manifest("manifest.toml") as bus:
 ```python
 from discord_event_bus import AsyncEventBus
 
+# MyEvent defined in the sync example above
+
 async def main():
     async with AsyncEventBus.from_manifest("manifest.toml") as bus:
         await bus.publish(channel="alerts", event=MyEvent("Hi", "Async"))
