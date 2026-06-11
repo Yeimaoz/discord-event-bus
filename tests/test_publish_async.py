@@ -30,8 +30,11 @@ async def test_async_publish_success(tmp_path, monkeypatch):
 
     fake_resp = MagicMock(spec=httpx.Response, status_code=204, text="")
     async with AsyncEventBus.from_manifest(manifest) as bus:
-        with patch.object(bus._client, "post", new=AsyncMock(return_value=fake_resp)):
+        with patch.object(bus._client, "post", new=AsyncMock(return_value=fake_resp)) as mock_post:
             await bus.publish(channel="alerts", event=MyEvent("hi"))
+    assert mock_post.call_count == 1
+    _, kwargs = mock_post.call_args
+    assert kwargs["json"]["embeds"][0]["title"] == "demo"
 
 
 @pytest.mark.asyncio
@@ -67,5 +70,7 @@ async def test_async_aclose_idempotent(tmp_path):
         '[[channels]]\nname="alerts"\ndirection="publish"\nwebhook_env_var="WH"\n'
     )
     bus = AsyncEventBus.from_manifest(manifest)
+    assert not bus._client.is_closed
     await bus.aclose()
-    await bus.aclose()
+    assert bus._client.is_closed
+    await bus.aclose()  # second close must not raise
