@@ -62,7 +62,7 @@ def post_with_retry(
             time.sleep(backoff)
             continue
 
-        if resp.status_code == 204:
+        if resp.status_code in (200, 204):
             return resp
 
         last_status = resp.status_code
@@ -105,7 +105,7 @@ async def post_with_retry_async(
             await asyncio.sleep(_compute_backoff(attempt, retry_after=0))
             continue
 
-        if resp.status_code == 204:
+        if resp.status_code in (200, 204):
             return resp
 
         last_status = resp.status_code

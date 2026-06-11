@@ -87,12 +87,17 @@ def load_manifest(path: str | Path) -> Manifest:
         if name in seen_names:
             raise ManifestValidationError(f"duplicate channel name: {name}")
         seen_names.add(name)
+        rate_limit_per_min = ch_data.get("rate_limit_per_min", DEFAULT_RATE_LIMIT_PER_MIN)
+        if rate_limit_per_min <= 0:
+            raise ManifestValidationError(
+                f"channel '{name}' rate_limit_per_min must be > 0, got {rate_limit_per_min}"
+            )
         channels.append(
             Channel(
                 name=name,
                 direction=ch_data["direction"],
                 webhook_env_var=ch_data.get("webhook_env_var"),
-                rate_limit_per_min=ch_data.get("rate_limit_per_min", DEFAULT_RATE_LIMIT_PER_MIN),
+                rate_limit_per_min=rate_limit_per_min,
                 description=ch_data.get("description", ""),
             )
         )
