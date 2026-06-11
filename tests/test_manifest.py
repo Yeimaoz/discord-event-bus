@@ -1,9 +1,11 @@
+from pathlib import Path
+
 import pytest
 
 from discord_event_bus.errors import ManifestValidationError
 from discord_event_bus.manifest import Channel, Manifest, load_manifest
 
-FIXTURES = "tests/fixtures/manifest_examples.toml"
+FIXTURES = Path(__file__).parent / "fixtures" / "manifest_examples.toml"
 
 
 def test_load_valid_manifest():
