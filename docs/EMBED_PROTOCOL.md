@@ -1,10 +1,12 @@
 # DiscordEmbed Protocol
 
-Your event type needs a `to_embed() -> dict` method.
+Your event type needs a `to_embed() -> dict[str, Any]` method.
 
 ```python
+from typing import Any
+
 class MyEvent:
-    def to_embed(self) -> dict:
+    def to_embed(self) -> dict[str, Any]:
         return {
             "title": "Build #42",
             "description": "✅ All checks passed",

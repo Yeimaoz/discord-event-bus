@@ -22,6 +22,11 @@ jobs:
             echo "::error::sanitization grep hit — private refs leaked"
             exit 1
           fi
+          # Also scan for real Discord webhook URLs (format: discordapp.com/api/webhooks/<id>/<token>)
+          if git ls-files | xargs grep -nE 'discord(app)?\.com/api/webhooks/[0-9]+/[A-Za-z0-9_-]{20,}' 2>/dev/null; then
+            echo "::error::sanitization grep hit — real Discord webhook URL leaked"
+            exit 1
+          fi
           echo "sanitization OK"
 
   test:

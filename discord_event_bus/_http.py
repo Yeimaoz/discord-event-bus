@@ -33,7 +33,14 @@ def _parse_retry_after(resp: httpx.Response) -> float:
 
 
 def _compute_backoff(attempt: int, retry_after: float) -> float:
-    """attempt is 0-based. retry_after overrides if > 0."""
+    """attempt is 0-based. retry_after overrides if > 0.
+
+    Known Limitation: Retry-After values are passed through without an upper bound cap.
+    An adversarially controlled server (or a hijacked webhook endpoint) could return an
+    arbitrarily large Retry-After header and cause the calling process to sleep
+    indefinitely. In practice Discord's own 429 responses use small values (< 60s).
+    A future version may add a configurable max_retry_after_sec parameter.
+    """
     if retry_after > 0:
         return retry_after
     return _BACKOFF_INITIAL_SEC * int(2 ** attempt)  # 1, 2, 4, 8, ...
