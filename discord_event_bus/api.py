@@ -75,16 +75,27 @@ class EventBus:
 
         Steps:
         1. Resolve channel from manifest (ChannelNotConfigured if missing)
-        2. Resolve webhook_env_var → webhook URL (WebhookUrlMissing if env unset)
+        2. Resolve webhook_env_var → webhook URL (WebhookUrlMissing if subscribe-only or env unset)
         3. Render event.to_embed() → validate (EmbedValidationError if oversized)
         4. Acquire rate limit token (RateLimitExhausted if budget timed out)
         5. POST with retry (PublishError if HTTP failure after retries)
+
+        Known Limitations:
+        - The rate-limit token wait budget (DEFAULT_RATE_LIMIT_TIMEOUT_SEC = 60s) is not
+          currently overridable per publish() call. Callers that need a shorter deadline
+          (e.g., latency-sensitive web handlers) must set a lower manifest rate_limit_per_min
+          or handle RateLimitExhausted at the call site.
         """
         ch = self._manifest.get_channel(channel)
         if ch is None:
             raise ChannelNotConfigured(f"channel '{channel}' not in manifest")
 
-        webhook_url = os.environ.get(ch.webhook_env_var or "")
+        if ch.webhook_env_var is None:
+            raise WebhookUrlMissing(
+                f"channel '{channel}' is subscribe-only and does not support publish"
+            )
+
+        webhook_url = os.environ.get(ch.webhook_env_var)
         if not webhook_url:
             raise WebhookUrlMissing(
                 f"channel '{channel}' webhook_env_var='{ch.webhook_env_var}' unset"
@@ -154,11 +165,31 @@ class AsyncEventBus:
         timeout: float = DEFAULT_TIMEOUT_SEC,
         max_retries: int = DEFAULT_MAX_RETRIES,
     ) -> None:
+        """Async publish event to channel.
+
+        Steps:
+        1. Resolve channel from manifest (ChannelNotConfigured if missing)
+        2. Resolve webhook_env_var → webhook URL (WebhookUrlMissing if subscribe-only or env unset)
+        3. Render event.to_embed() → validate (EmbedValidationError if oversized)
+        4. Acquire rate limit token (RateLimitExhausted if budget timed out)
+        5. POST with retry (PublishError if HTTP failure after retries)
+
+        Known Limitations:
+        - The rate-limit token wait budget (DEFAULT_RATE_LIMIT_TIMEOUT_SEC = 60s) is not
+          currently overridable per publish() call. Callers that need a shorter deadline
+          (e.g., latency-sensitive web handlers) must set a lower manifest rate_limit_per_min
+          or handle RateLimitExhausted at the call site.
+        """
         ch = self._manifest.get_channel(channel)
         if ch is None:
             raise ChannelNotConfigured(f"channel '{channel}' not in manifest")
 
-        webhook_url = os.environ.get(ch.webhook_env_var or "")
+        if ch.webhook_env_var is None:
+            raise WebhookUrlMissing(
+                f"channel '{channel}' is subscribe-only and does not support publish"
+            )
+
+        webhook_url = os.environ.get(ch.webhook_env_var)
         if not webhook_url:
             raise WebhookUrlMissing(
                 f"channel '{channel}' webhook_env_var='{ch.webhook_env_var}' unset"

@@ -14,6 +14,7 @@ pip install discord-event-bus
 ## Quick start (sync)
 
 ```python
+from typing import Any
 from discord_event_bus import EventBus
 
 
@@ -22,7 +23,7 @@ class MyEvent:
         self.title = title
         self.body = body
 
-    def to_embed(self) -> dict:
+    def to_embed(self) -> dict[str, Any]:
         return {"title": self.title, "description": self.body}
 
 

@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
+from typing import Any
 
 from discord_event_bus import AsyncEventBus
 
@@ -11,7 +12,7 @@ class MyEvent:
     title: str
     body: str
 
-    def to_embed(self) -> dict:
+    def to_embed(self) -> dict[str, Any]:
         return {"title": self.title, "description": self.body}
 
 

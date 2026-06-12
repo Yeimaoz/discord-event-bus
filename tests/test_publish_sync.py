@@ -64,6 +64,18 @@ def test_webhook_env_var_missing_raises(tmp_path, monkeypatch):
             bus.publish(channel="alerts", event=MyEvent("x"))
 
 
+def test_publish_on_subscribe_only_channel_raises(tmp_path):
+    """Publishing to subscribe-only channel gives clear error, not 'None env var unset'."""
+    manifest = tmp_path / "m.toml"
+    manifest.write_text(
+        '[manifest]\nname="x"\nversion="0.1.0"\nschema_version=1\n'
+        '[[channels]]\nname="events"\ndirection="subscribe"\n'
+    )
+    with EventBus.from_manifest(manifest) as bus:
+        with pytest.raises(WebhookUrlMissing, match="subscribe-only"):
+            bus.publish(channel="events", event=MyEvent("x"))
+
+
 def test_context_manager_closes_client(tmp_path):
     manifest = tmp_path / "m.toml"
     manifest.write_text(
@@ -71,7 +83,7 @@ def test_context_manager_closes_client(tmp_path):
         '[[channels]]\nname="alerts"\ndirection="publish"\nwebhook_env_var="WH"\n'
     )
     bus = EventBus.from_manifest(manifest)
-    assert bus._client is not None
+    assert not bus._client.is_closed
     bus.close()
-    # close is idempotent
-    bus.close()
+    assert bus._client.is_closed
+    bus.close()  # second close must not raise

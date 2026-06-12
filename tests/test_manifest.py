@@ -55,8 +55,11 @@ def test_unsupported_schema_version_raises():
     with tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False) as f:
         f.write('[manifest]\nname="x"\nversion="0.1.0"\nschema_version=2\n')
         path = f.name
-    with pytest.raises(ManifestValidationError, match="schema_version"):
-        load_manifest(path)
+    try:
+        with pytest.raises(ManifestValidationError, match="schema_version"):
+            load_manifest(path)
+    finally:
+        Path(path).unlink(missing_ok=True)
 
 
 def test_missing_required_field_raises():
@@ -64,8 +67,11 @@ def test_missing_required_field_raises():
     with tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False) as f:
         f.write('[manifest]\nname="x"\n')   # missing version + schema_version
         path = f.name
-    with pytest.raises(ManifestValidationError):
-        load_manifest(path)
+    try:
+        with pytest.raises(ManifestValidationError):
+            load_manifest(path)
+    finally:
+        Path(path).unlink(missing_ok=True)
 
 
 def test_duplicate_channel_name_raises():
@@ -77,8 +83,11 @@ def test_duplicate_channel_name_raises():
             '[[channels]]\nname="dup"\ndirection="publish"\nwebhook_env_var="B"\n'
         )
         path = f.name
-    with pytest.raises(ManifestValidationError, match="duplicate"):
-        load_manifest(path)
+    try:
+        with pytest.raises(ManifestValidationError, match="duplicate"):
+            load_manifest(path)
+    finally:
+        Path(path).unlink(missing_ok=True)
 
 
 def test_publish_channel_missing_webhook_env_var_raises():
@@ -90,5 +99,40 @@ def test_publish_channel_missing_webhook_env_var_raises():
             '[[channels]]\nname="a"\ndirection="publish"\n'
         )
         path = f.name
-    with pytest.raises(ManifestValidationError, match="webhook_env_var"):
-        load_manifest(path)
+    try:
+        with pytest.raises(ManifestValidationError, match="webhook_env_var"):
+            load_manifest(path)
+    finally:
+        Path(path).unlink(missing_ok=True)
+
+
+def test_rate_limit_zero_raises():
+    """rate_limit_per_min=0 must raise ManifestValidationError, not silently pass to TokenBucket."""
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False) as f:
+        f.write(
+            '[manifest]\nname="x"\nversion="0.1.0"\nschema_version=1\n'
+            '[[channels]]\nname="a"\ndirection="publish"\nwebhook_env_var="X"\nrate_limit_per_min=0\n'
+        )
+        path = f.name
+    try:
+        with pytest.raises(ManifestValidationError, match="rate_limit_per_min"):
+            load_manifest(path)
+    finally:
+        Path(path).unlink(missing_ok=True)
+
+
+def test_rate_limit_negative_raises():
+    """rate_limit_per_min=-1 must raise ManifestValidationError."""
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".toml", delete=False) as f:
+        f.write(
+            '[manifest]\nname="x"\nversion="0.1.0"\nschema_version=1\n'
+            '[[channels]]\nname="a"\ndirection="publish"\nwebhook_env_var="X"\nrate_limit_per_min=-1\n'
+        )
+        path = f.name
+    try:
+        with pytest.raises(ManifestValidationError, match="rate_limit_per_min"):
+            load_manifest(path)
+    finally:
+        Path(path).unlink(missing_ok=True)
